@@ -22,7 +22,6 @@ log.info('App starting...');
 /**
  * Init vars
  */
-let svg = new svgo();
 let mainWindow;
 global.debug = {
     devTools: 0
@@ -73,7 +72,8 @@ const createWindow = () => {
         clearlist: false,
         suffix: true,
         updatecheck: true,
-
+        addxmltag: false,
+        prettifysvg: false,
     };
 
     /** set default settings at first launch */
@@ -184,6 +184,21 @@ ipcMain.on(
     }
 );
 
+/** Init SVGO */
+const svgConfig = {
+    'plugins': [
+        {
+            'inlineStyles': {
+                'onlyMatchedOnce': false,
+            },
+        }
+    ],
+    'js2svg': {
+        'pretty': settings.get('prettifysvg'),
+    },
+};
+let svg = new svgo(svgConfig);
+
 
 /**
  * Shrinking the image
@@ -201,6 +216,8 @@ let processFile = (filePath, fileName) => {
     /** Get filesize */
     let sizeOrig = getFileSize(filePath);
 
+    console.log(settings.get('addxmltag'));
+
     /** Process image(s) */
     fs.readFile(filePath, 'utf8', (err, data) => {
 
@@ -213,9 +230,15 @@ let processFile = (filePath, fileName) => {
 
         switch (path.extname(fileName).toLowerCase()) {
         case '.svg': {
+            const xmlTag = '<?xml version="1.0" encoding="utf-8"?>\n';
             svg.optimize(data)
                 .then((result) => {
-                    fs.writeFile(newFile, result.data, (err) => {
+                    let newData = '';
+                    if (settings.get('addxmltag')) {
+                        newData += xmlTag;
+                    }
+                    newData += result.data;
+                    fs.writeFile(newFile, newData, (err) => {
                         touchBarResult.label = 'Your shrinked image: ' + newFile;
                         sendToRenderer(err, newFile, sizeOrig);
                     });

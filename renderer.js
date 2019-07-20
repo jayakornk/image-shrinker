@@ -17,6 +17,8 @@ let dragzone = document.getElementById('dragzone'),
     folderswitch = document.getElementById('folderswitch'),
     clearlist = document.getElementById('clearlist'),
     updatecheck = document.getElementById('updatecheck'),
+    addxmltag = document.getElementById('addxmltag'),
+    prettifysvg = document.getElementById('prettifysvg'),
     notification = document.getElementById('notification');
 
 /*
@@ -26,6 +28,8 @@ let userSetting = settings.getAll();
 notification.checked = userSetting.notification;
 clearlist.checked = userSetting.clearlist;
 updatecheck.checked = userSetting.updatecheck;
+addxmltag.checked = userSetting.addxmltag;
+prettifysvg.checked = userSetting.prettifysvg;
 
 if (userSetting.folderswitch === false) {
     folderswitch.checked = false;
@@ -80,20 +84,43 @@ document.ondragend = () => {
     return false;
 };
 
+function traverseFileTree(item, path) {
+    const exclude = ['.DS_Store'];
+    path = path || "";
+    if (item.isFile) {
+      // Get file
+        item.file(function(file) {
+            if (fs.statSync(file.path).isDirectory() || exclude.includes(file.name)) {
+                dragzone.classList.remove('drag-active');
+
+                return false;
+            }
+            ipcRenderer.send('shrinkImage', file.name, file.path, file.lastModified);
+        });
+    } else if (item.isDirectory) {
+        // Get folder contents
+        var dirReader = item.createReader();
+        dirReader.readEntries(function(entries) {
+            for (var i=0; i<entries.length; i++) {
+                traverseFileTree(entries[i], path + item.name + "/");
+            }
+        });
+    }
+}
+
 /*
  * Action on drag drop
  */
 document.ondrop = e => {
     e.preventDefault();
 
-    for (let f of e.dataTransfer.files) {
-        if (fs.statSync(f.path).isDirectory()) {
-            dragzone.classList.remove('drag-active');
-
-            return false;
+    var items = event.dataTransfer.items;
+    for (var i=0; i<items.length; i++) {
+        // webkitGetAsEntry is where the magic happens
+        var item = items[i].webkitGetAsEntry();
+        if (item) {
+            traverseFileTree(item);
         }
-
-        ipcRenderer.send('shrinkImage', f.name, f.path, f.lastModified);
     }
 
     if (settings.get('clearlist')) {
