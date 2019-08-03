@@ -11,6 +11,9 @@
 <body>
 
 <div class="wrapper">
+    <div class="bar download-progress visible" id="download-progress">
+        <div class="bar-item" id="download-progress-bar" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
     <i class="icon icon-more-horiz icon-2x float-right d-block" id="btnOpenSettings"></i>
 
     <section id="dragzone" class="">
@@ -90,6 +93,59 @@
                 <div class="column col-3 ">
                     <label class="form-switch float-right">
                         <input id="updatecheck" name="updatecheck" type="checkbox">
+                        <i class="form-icon"></i>
+                    </label>
+                </div>
+            </div>
+
+            <div class="columns">
+                <div class="column col-12"><h5>SVG Options</h5></div>
+            </div>
+
+            <div class="columns">
+                <div class="column col-9">
+                    Add XML tag to .svg?
+                </div>
+                <div class="column col-3 ">
+                    <label class="form-switch float-right">
+                        <input id="addxmltag" name="addxmltag" type="checkbox">
+                        <i class="form-icon"></i>
+                    </label>
+                </div>
+            </div>
+
+            <div class="columns">
+                <div class="column col-9">
+                    Prettify SVG <cite>(Need to restart program!)</cite>
+                </div>
+                <div class="column col-3">
+                    <label class="form-switch float-right">
+                        <input id="prettifysvg" name="prettifysvg" type="checkbox">
+                        <i class="form-icon"></i>
+                    </label>
+                </div>
+            </div>
+
+            <div class="columns">
+                <div class="column col-12"><h5>JPEG Options</h5></div>
+            </div>
+    
+            <div class="columns">
+                <div class="column col-9">
+                    <label class="form-label" for="jpegquality">Quality (%)</label>
+                </div>
+                <div class="column col-3">
+                    <input class="form-input" type="number" id="jpegquality" placeholder="80" name="jpegquality">
+                </div>
+            </div>
+
+            <div class="columns">
+                <div class="column col-9">
+                    Progessive Mode
+                </div>
+                <div class="column col-3">
+                    <label class="form-switch float-right">
+                        <input id="jpegprogressive" name="jpegprogressive" type="checkbox">
                         <i class="form-icon"></i>
                     </label>
                 </div>

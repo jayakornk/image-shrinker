@@ -46,20 +46,21 @@ if (process.platform === 'darwin') {
         {type: 'separator'},
         {role: 'front'},
     ];
-    
+
+    // if (global.debug.devTools === 1) {
+    template[2].submenu.push(
+        {type: 'separator'},
+        {
+            label: 'Open Dev-Tools',
+            click: (item, focusedWindow) => {
+                if (focusedWindow)
+                    focusedWindow.toggleDevTools();
+            },
+            accelerator: 'Cmd+Alt+i',
+        }
+    );
+    // }
+
     const menu = Menu.buildFromTemplate(template);
     Menu.setApplicationMenu(menu);
-    
-    if (global.debug.devTools === 1) {
-        template[2].submenu.push(
-            {type: 'separator'},
-            {
-                label: 'Open Dev-Tools',
-                click: (item, focusedWindow) => {
-                    if (focusedWindow)
-                        focusedWindow.toggleDevTools();
-                }
-            }
-        );
-    }
 }
