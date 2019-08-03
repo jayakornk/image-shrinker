@@ -24,6 +24,10 @@
           box-sizing: border-box;
 }
 
+::-webkit-scrollbar {
+  display: none;
+}
+
 html {
   -webkit-app-region: drag;
 }
@@ -111,6 +115,30 @@ body {
   font-size: 1.6rem;
   font-weight: 700;
   margin: 0 0 .5rem;
+}
+
+.download-progress {
+  display: none;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.download-progress.visible {
+  display: block;
+}
+
+.download-progress .bar-item {
+  background-color: #aaa9eb;
+  position: static;
+}
+
+.download-progress span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+          transform: translateY(-50%);
 }
 
 #result {
