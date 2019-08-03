@@ -19,6 +19,8 @@ let dragzone = document.getElementById('dragzone'),
     updatecheck = document.getElementById('updatecheck'),
     addxmltag = document.getElementById('addxmltag'),
     prettifysvg = document.getElementById('prettifysvg'),
+    jpegquality = document.getElementById('jpegquality'),
+    jpegprogressive = document.getElementById('jpegprogressive'),
     notification = document.getElementById('notification');
 
 /*
@@ -30,6 +32,8 @@ clearlist.checked = userSetting.clearlist;
 updatecheck.checked = userSetting.updatecheck;
 addxmltag.checked = userSetting.addxmltag;
 prettifysvg.checked = userSetting.prettifysvg;
+jpegquality.valueAsNumber = userSetting.jpegquality;
+jpegprogressive.checked = userSetting.jpegprogressive;
 
 if (userSetting.folderswitch === false) {
     folderswitch.checked = false;
@@ -38,6 +42,9 @@ if (userSetting.folderswitch === false) {
     folderswitch.checked = true;
 }
 
+/**
+ * @param {{savepath:string}} userSetting
+ */
 if (userSetting.savepath)
     btnSavepath.innerText = cutFolderName(userSetting.savepath[0]);
 
@@ -84,37 +91,13 @@ document.ondragend = () => {
     return false;
 };
 
-function traverseFileTree(item, path) {
-    const exclude = ['.DS_Store'];
-    path = path || "";
-    if (item.isFile) {
-      // Get file
-        item.file(function(file) {
-            if (fs.statSync(file.path).isDirectory() || exclude.includes(file.name)) {
-                dragzone.classList.remove('drag-active');
-
-                return false;
-            }
-            ipcRenderer.send('shrinkImage', file.name, file.path, file.lastModified);
-        });
-    } else if (item.isDirectory) {
-        // Get folder contents
-        var dirReader = item.createReader();
-        dirReader.readEntries(function(entries) {
-            for (var i=0; i<entries.length; i++) {
-                traverseFileTree(entries[i], path + item.name + "/");
-            }
-        });
-    }
-}
-
 /*
  * Action on drag drop
  */
 document.ondrop = e => {
     e.preventDefault();
 
-    var items = event.dataTransfer.items;
+    var items = e.dataTransfer.items;
     for (var i=0; i<items.length; i++) {
         // webkitGetAsEntry is where the magic happens
         var item = items[i].webkitGetAsEntry();
@@ -155,7 +138,11 @@ btnSavepath.onclick = () => {
  */
 Array.from(switches).forEach(switchEl => {
     switchEl.onchange = e => {
-        settings.set(e.target.name, e.target.checked);
+        if (e.target.type === 'number') {
+            settings.set(e.target.name, e.target.valueAsNumber);
+        } else {
+            settings.set(e.target.name, e.target.checked);
+        }
         if (e.target.name === 'folderswitch') {
             if (e.target.checked === false) {
                 wrapperSavePath.classList.remove('d-none');
@@ -277,6 +264,42 @@ document.onmouseleave = () => {
 };
 
 // (opt) event, text as return value
+ipcRenderer.on('updateCheck', (event, stage, progress) => {
+    // changes the text of the button
+    const downloadWrapper = document.getElementById('download-progress');
+    const download = document.getElementById('download-progress-bar');
+    switch (stage) {
+        case 'checking':
+            download.innerHTML = '<span>Checking for update...</span>';
+            console.log('checking');
+            break;
+        case 'available':
+            download.innerHTML = '<span>Update available!</span>';
+            console.log('available');
+            break;
+        case 'not-available':
+            download.innerHTML = '<span>Update not available.</span>';
+            console.log('not-available');
+            setTimeout(() => {
+                downloadWrapper.classList.remove('visible');
+            }, 3000);
+            break;
+        case 'in-progress':
+            console.log('in-progress');
+            download.style.width = `${progress.percent}%`;
+            download.setAttribute('aria-valuenow', progress.percent);
+            download.innerHTML = `<span>${progress.percent.toFixed(1)}% - ${(progress.bytesPerSecond / 1000).toFixed(0)} KB/s</span>`;
+            break;
+        case 'downloaded':
+            console.log('downloaded');
+            download.innerHTML = '<span>Please restart to update.</span>';
+            break;
+        default:
+            break;
+    }
+});
+
+// (opt) event, text as return value
 ipcRenderer.on('updateReady', () => {
     // changes the text of the button
     const container = document.getElementById('ready');
@@ -286,12 +309,41 @@ ipcRenderer.on('updateReady', () => {
 /*
  * Open external links in browser
  */
-Array.from(openInBrowserLink).forEach(el => {
-    el.onclick = e => {
-        e.preventDefault();
-        shell.openExternal(e.srcElement.offsetParent.lastElementChild.href);
-    };
+Array.from(openInBrowserLink).forEach((el) => {
+    el.addEventListener('click', (event) => {
+        event.preventDefault();
+        shell.openExternal(event.srcElement.offsetParent.lastElementChild.href)
+            .catch((error) => {
+                log.error(error);
+            });
+    });
 });
+
+
+
+function traverseFileTree(item, path) {
+    const exclude = ['.DS_Store'];
+    path = path || '';
+    if (item.isFile) {
+        // Get file
+        item.file(function(file) {
+            if (fs.statSync(file.path).isDirectory() || exclude.includes(file.name)) {
+                dragzone.classList.remove('drag-active');
+
+                return false;
+            }
+            ipcRenderer.send('shrinkImage', file.name, file.path, file.lastModified);
+        });
+    } else if (item.isDirectory) {
+        // Get folder contents
+        var dirReader = item.createReader();
+        dirReader.readEntries(function(entries) {
+            for (let i in entries) {
+                traverseFileTree(entries[i], path + item.name + '/');
+            }
+        });
+    }
+}
 
 /*
  * Cut path from beginning, if necessary
