@@ -234,15 +234,18 @@ ipcMain.on(
 
 /** Init SVGO */
 const svgConfig = {
-    'plugins': [
+    plugins: [
         {
-            'inlineStyles': {
-                'onlyMatchedOnce': false,
+            inlineStyles: {
+                onlyMatchedOnce: false,
             },
-        }
+        },
+        {
+            removeViewBox: false,
+        },
     ],
-    'js2svg': {
-        'pretty': settings.get('prettifysvg'),
+    js2svg: {
+        pretty: settings.get('prettifysvg'),
     },
 };
 let svg = new svgo(svgConfig);
@@ -277,13 +280,16 @@ let processFile = (filePath, fileName) => {
         switch (path.extname(fileName).toLowerCase()) {
             case '.svg': {
                 const xmlTag = '<?xml version="1.0" encoding="utf-8"?>\n';
-                const regex = /<\?xml version="1.0" encoding="utf-8"\?>/gi;
+                /** to be removed in next version: removeXMLProcInst plugin already remove xml tag */
+                // const regex = /<\?xml version="1.0" encoding="utf-8"\?>/gi;
                 svg.optimize(data)
                     .then((result) => {
                         let newData = '';
-                        if (settings.get('addxmltag') && !regex.test(result.data)) {
-                            newData += xmlTag;
-                        }
+                        /** to be removed in next version */
+                        // if (settings.get('addxmltag') && !regex.test(result.data)) {
+                        //     newData += xmlTag;
+                        // }
+                        newData += xmlTag;
                         newData += result.data;
                         fs.writeFile(newFile, newData, (err) => {
                             touchBarResult.label = 'Your shrinked image: ' + newFile;
