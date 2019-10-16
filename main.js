@@ -351,7 +351,7 @@ const generateNewPath = (pathName) => {
     makeDir.sync(objPath.dir);
 
     /** Suffix setting */
-    let suffix = settings.get('suffix') ? '.min' : '';
+    let suffix = settings.get('suffix') ? '-min' : '';
     objPath.base = objPath.name + suffix + objPath.ext;
 
     return path.format(objPath);
